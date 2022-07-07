@@ -4,6 +4,15 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+import 'antd/dist/antd.css';
+
+import 'prismjs/components/prism-clike';
+import 'prismjs/components/prism-markup';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-yaml';
+
+import 'prismjs/themes/prism.css';
+
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
