@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Col, Row } from "antd";
 import Editor from "react-simple-code-editor";
 import { ConfigFactory, extract } from "configurable-html-parser";
@@ -95,8 +95,6 @@ transform: [attr(foo), number]`
   },
 };
 
-console.log("languages:", languages);
-
 function App() {
   const [editorVals, setEditorVals] = useState({
     input: samples.basic.simple.html, // html
@@ -119,10 +117,14 @@ function App() {
     },
     [setEditorVals]
   );
+  const $ = useMemo(() => {
+    return load(editorVals.input);
+  }, [ editorVals.input ]);
+  const config = useMemo(() => {
+    return ConfigFactory.fromYAML(editorVals.config)
+  }, [ editorVals.config ]);
 
   useEffect(() => {
-    const $ = load(editorVals.input);
-    const config = ConfigFactory.fromYAML(editorVals.config);
     const result = extract($, config);
 
     setEditorVals({
@@ -130,7 +132,7 @@ function App() {
       config: editorVals.config,
       output: JSON.stringify(result, null, "  "),
     });
-  }, [editorVals.input, editorVals.config, setEditorVals]);
+  }, [$, config, editorVals.input, editorVals.config, setEditorVals]);
 
   return (
     <>
