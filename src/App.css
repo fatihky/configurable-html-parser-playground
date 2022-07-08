@@ -13,3 +13,8 @@ textarea.npm__react-simple-code-editor__textarea:focus {
 .playground-tab-header {
   margin-bottom: 0.5em;
 }
+
+.editor-wrapper {
+  max-height: 50em;
+  overflow: scroll !important;
+}

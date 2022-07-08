@@ -4,8 +4,11 @@ import Editor from "react-simple-code-editor";
 import { ConfigFactory, extract } from "configurable-html-parser";
 import { highlight, languages } from "prismjs/components/prism-core";
 import { load } from "cheerio";
+import cls from 'classnames'
 
 import './App.css'
+
+const debounce = require('lodash.debounce');
 
 const samples = {
   basic: {
@@ -126,11 +129,13 @@ function App() {
     try {
       return ConfigFactory.fromYAML(editorVals.config);
     } catch (err) {
+      console.log((err as any).message);
       return null;
     }
   }, [ editorVals.config ]);
+  const isValidConfig = config !== null;
 
-  useEffect(() => {
+  const inputChangeHandler = () => {
     const result = config === null
       ? null
       : extract($, config);
@@ -140,8 +145,17 @@ function App() {
       config: editorVals.config,
       output: JSON.stringify(result, null, "  "),
     });
-  }, [$, config, editorVals.input, editorVals.config, setEditorVals]);
-  const isValidConfig = config !== null;
+  };
+  const debouncedInputChangeHandler = useMemo(
+    () => debounce(inputChangeHandler, 500)
+  , [ $, config, editorVals.input, editorVals.config, setEditorVals ]);
+
+  useEffect(debouncedInputChangeHandler, [$, config, editorVals.input, editorVals.config, setEditorVals]);
+
+  useEffect(() => {
+    return () =>
+      debouncedInputChangeHandler.cancel()
+  }, [ debouncedInputChangeHandler ]);
 
   return (
     <>
@@ -175,6 +189,7 @@ function App() {
           </header>
 
           <Editor
+            className="editor-wrapper"
             value={editorVals.input}
             onValueChange={(code) =>
               setEditorVals({ ...editorVals, input: code })
@@ -191,6 +206,7 @@ function App() {
         <Col span={7}>
           <header className="playground-tab-header">Parser Configuration</header>
           <Editor
+            className={cls('editor-wrapper', (!isValidConfig) && 'invalid-parser-config')}
             value={editorVals.config}
             onValueChange={(code) =>
               setEditorVals({ ...editorVals, config: code })
@@ -201,13 +217,13 @@ function App() {
               fontFamily: '"Fira code", "Fira Mono", monospace',
               fontSize: 12,
             }}
-            className={isValidConfig ? '' : 'invalid-parser-config'}
           />
         </Col>
 
         <Col span={7}>
           <header className="playground-tab-header">Output</header>
           <Editor
+            className="editor-wrapper"
             value={editorVals.output}
             onValueChange={(code) =>
               setEditorVals({ ...editorVals, output: code })

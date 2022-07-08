@@ -12,6 +12,8 @@
     "@types/react-dom": "^18.0.5",
     "antd": "^4.21.5",
     "cheerio": "^1.0.0-rc.12",
+    "classnames": "^2.3.1",
+    "lodash.debounce": "^4.0.8",
     "prismjs": "^1.28.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -45,6 +47,7 @@
     ]
   },
   "devDependencies": {
+    "@types/lodash.debounce": "^4.0.7",
     "@types/prismjs": "^1.26.0"
   }
 }
