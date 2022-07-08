@@ -5,6 +5,8 @@ import { ConfigFactory, extract } from "configurable-html-parser";
 import { highlight, languages } from "prismjs/components/prism-core";
 import { load } from "cheerio";
 
+import './App.css'
+
 const samples = {
   basic: {
     simple: {
@@ -121,11 +123,17 @@ function App() {
     return load(editorVals.input);
   }, [ editorVals.input ]);
   const config = useMemo(() => {
-    return ConfigFactory.fromYAML(editorVals.config)
+    try {
+      return ConfigFactory.fromYAML(editorVals.config);
+    } catch (err) {
+      return null;
+    }
   }, [ editorVals.config ]);
 
   useEffect(() => {
-    const result = extract($, config);
+    const result = config === null
+      ? null
+      : extract($, config);
 
     setEditorVals({
       input: editorVals.input,
@@ -133,12 +141,13 @@ function App() {
       output: JSON.stringify(result, null, "  "),
     });
   }, [$, config, editorVals.input, editorVals.config, setEditorVals]);
+  const isValidConfig = config !== null;
 
   return (
     <>
-      <Row>
-        <Col span={8}>
-          <header style={{ paddingRight: "1em" }}>
+      <Row justify='center' gutter={10}>
+        <Col span={7}>
+          <header className="playground-tab-header">
             HTML
             <select
               style={{ float: "right" }}
@@ -179,8 +188,8 @@ function App() {
           />
         </Col>
 
-        <Col span={8}>
-          <header>Parser Configuration</header>
+        <Col span={7}>
+          <header className="playground-tab-header">Parser Configuration</header>
           <Editor
             value={editorVals.config}
             onValueChange={(code) =>
@@ -192,11 +201,12 @@ function App() {
               fontFamily: '"Fira code", "Fira Mono", monospace',
               fontSize: 12,
             }}
+            className={isValidConfig ? '' : 'invalid-parser-config'}
           />
         </Col>
 
-        <Col span={8}>
-          <header>Output</header>
+        <Col span={7}>
+          <header className="playground-tab-header">Output</header>
           <Editor
             value={editorVals.output}
             onValueChange={(code) =>
