@@ -1,9 +1,9 @@
 .invalid-parser-config textarea.npm__react-simple-code-editor__textarea {
-  border-color: red !important;
+  border-color: rgb(237, 82, 82) !important;
 }
 
 textarea.npm__react-simple-code-editor__textarea {
-  border: 2px dashed black !important;
+  border: 2px dashed #323232 !important;
 }
 
 textarea.npm__react-simple-code-editor__textarea:focus {
@@ -17,4 +17,28 @@ textarea.npm__react-simple-code-editor__textarea:focus {
 .editor-wrapper {
   max-height: 50em;
   overflow: scroll !important;
+  background: #1B1A1A;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  padding: 10px;
+  min-height: 20em;
+}
+
+.header {
+  background: #0F0F0F !important;
+  color: white !important;
+}
+
+.content {
+  background: #0F0F0F !important;
+}
+
+.preset-selector {
+  background: #0F0F0F !important;
+  color: white;
+  border-radius: 2px;
+  font-size: 0.9rem;
+  width: 400px;
+  margin-left: 20px;
+  border: 2px dashed #323232;
 }
