@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Col, Layout, Row } from "antd";
 import { Content, Header } from "antd/lib/layout/layout";
 import Editor from "react-simple-code-editor";
+import { ConfigFactory, extract } from "configurable-html-parser";
 import { highlight, languages } from "prismjs/components/prism-core";
 import { load } from "cheerio";
 import cls from 'classnames'
@@ -124,7 +125,7 @@ function App() {
   );
   const $ = useMemo(() => {
     return load(editorVals.input);
-  }, [ editorVals.input ]);
+  }, [editorVals.input]);
   const config = useMemo(() => {
     try {
       return ConfigFactory.fromYAML(editorVals.config);
@@ -132,7 +133,7 @@ function App() {
       console.log((err as any).message);
       return null;
     }
-  }, [ editorVals.config ]);
+  }, [editorVals.config]);
   const isValidConfig = config !== null;
 
   const inputChangeHandler = () => {
@@ -148,14 +149,14 @@ function App() {
   };
   const debouncedInputChangeHandler = useMemo(
     () => debounce(inputChangeHandler, 500)
-  , [ $, config, editorVals.input, editorVals.config, setEditorVals ]);
+    , [$, config, editorVals.input, editorVals.config, setEditorVals]);
 
   useEffect(debouncedInputChangeHandler, [$, config, editorVals.input, editorVals.config, setEditorVals]);
 
   useEffect(() => {
     return () =>
       debouncedInputChangeHandler.cancel()
-  }, [ debouncedInputChangeHandler ]);
+  }, [debouncedInputChangeHandler]);
 
   return (
     <>
