@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Col, Row } from "antd";
+import { Col, Layout, Row } from "antd";
+import { Content, Header } from "antd/lib/layout/layout";
 import Editor from "react-simple-code-editor";
 import { ConfigFactory, extract } from "configurable-html-parser";
 import { highlight, languages } from "prismjs/components/prism-core";
@@ -124,7 +125,7 @@ function App() {
   );
   const $ = useMemo(() => {
     return load(editorVals.input);
-  }, [ editorVals.input ]);
+  }, [editorVals.input]);
   const config = useMemo(() => {
     try {
       return ConfigFactory.fromYAML(editorVals.config);
@@ -132,7 +133,7 @@ function App() {
       console.log((err as any).message);
       return null;
     }
-  }, [ editorVals.config ]);
+  }, [editorVals.config]);
   const isValidConfig = config !== null;
 
   const inputChangeHandler = () => {
@@ -148,95 +149,89 @@ function App() {
   };
   const debouncedInputChangeHandler = useMemo(
     () => debounce(inputChangeHandler, 500)
-  , [ $, config, editorVals.input, editorVals.config, setEditorVals ]);
+    , [$, config, editorVals.input, editorVals.config, setEditorVals]);
 
   useEffect(debouncedInputChangeHandler, [$, config, editorVals.input, editorVals.config, setEditorVals]);
 
   useEffect(() => {
     return () =>
       debouncedInputChangeHandler.cancel()
-  }, [ debouncedInputChangeHandler ]);
+  }, [debouncedInputChangeHandler]);
 
   return (
     <>
-      <Row justify='center' gutter={10}>
-        <Col span={7}>
-          <header className="playground-tab-header">
-            HTML
-            <select
-              style={{ float: "right" }}
-              onChange={(ev) => onSampleChange(ev.target.value)}
-            >
-              <optgroup label="Basic">
-                <option value="simple">Simple</option>
-                <option value="getNumber">Get Number</option>
-                <option value="trim">Trim</option>
-                <option value="attr">Get Attribute</option>
-                <option value="attrMulti">Get Multiple Attributes</option>
-                <option value="attrAll">Get All Attributes</option>
-              </optgroup>
-              <optgroup label="Intermediate">
-                <option value="html">Get Inner HTML</option>
-                <option value="$self">$self selector</option>
-                <option value="html$self">Get Parent Selector's Inner HTML</option>
-                <option value="multiTransform">Multiple Transformers</option>
-              </optgroup>
-              <optgroup label="Advanced">
-                <option value="union">Union Configuration</option>
-                <option value="unionDefault">Union Configuration With Default Case</option>
-              </optgroup>
-            </select>
-          </header>
+      <Layout>
+        <Header className="header">
+          Playground
+          <select
+            onChange={(ev) => onSampleChange(ev.target.value)}
+            className="preset-selector"
+          >
+            <optgroup label="Basic">
+              <option value="simple">Simple</option>
+              <option value="getNumber">Get Number</option>
+              <option value="trim">Trim</option>
+              <option value="attr">Get Attribute</option>
+              <option value="attrMulti">Get Multiple Attributes</option>
+              <option value="attrAll">Get All Attributes</option>
+            </optgroup>
+            <optgroup label="Intermediate">
+              <option value="html">Get Inner HTML</option>
+              <option value="$self">$self selector</option>
+              <option value="html$self">Get Parent Selector's Inner HTML</option>
+              <option value="multiTransform">Multiple Transformers</option>
+            </optgroup>
+            <optgroup label="Advanced">
+              <option value="union">Union Configuration</option>
+              <option value="unionDefault">Union Configuration With Default Case</option>
+            </optgroup>
+          </select>
+        </Header>
 
-          <Editor
-            className="editor-wrapper"
-            value={editorVals.input}
-            onValueChange={(code) =>
-              setEditorVals({ ...editorVals, input: code })
-            }
-            highlight={(code) => highlight(code, languages.html)}
-            padding={10}
-            style={{
-              fontFamily: '"Fira code", "Fira Mono", monospace',
-              fontSize: 12,
-            }}
-          />
-        </Col>
+        <Content className="content" >
+          <Row justify='center' gutter={10} >
+            <Col span={7}>
+              <header className="playground-tab-header">HTML</header>
 
-        <Col span={7}>
-          <header className="playground-tab-header">Parser Configuration</header>
-          <Editor
-            className={cls('editor-wrapper', (!isValidConfig) && 'invalid-parser-config')}
-            value={editorVals.config}
-            onValueChange={(code) =>
-              setEditorVals({ ...editorVals, config: code })
-            }
-            highlight={(code) => highlight(code, languages.yaml)}
-            padding={10}
-            style={{
-              fontFamily: '"Fira code", "Fira Mono", monospace',
-              fontSize: 12,
-            }}
-          />
-        </Col>
+              <Editor
+                className="editor-wrapper"
+                value={editorVals.input}
+                onValueChange={(code) =>
+                  setEditorVals({ ...editorVals, input: code })
+                }
+                highlight={(code) => highlight(code, languages.html)}
+                padding={10}
+              />
+            </Col>
 
-        <Col span={7}>
-          <header className="playground-tab-header">Output</header>
-          <Editor
-            className="editor-wrapper"
-            value={editorVals.output}
-            onValueChange={(code) =>
-              setEditorVals({ ...editorVals, output: code })
-            }
-            highlight={(code) => highlight(code, languages.js)}
-            padding={10}
-            style={{
-              fontFamily: '"Fira code", "Fira Mono", monospace',
-              fontSize: 12,
-            }}
-          />
-        </Col>
-      </Row>
+            <Col span={7}>
+              <header className="playground-tab-header">Parser Configuration</header>
+              <Editor
+                className={cls('editor-wrapper', (!isValidConfig) && 'invalid-parser-config')}
+                value={editorVals.config}
+                onValueChange={(code) =>
+                  setEditorVals({ ...editorVals, config: code })
+                }
+                highlight={(code) => highlight(code, languages.yaml)}
+                padding={10}
+              />
+            </Col>
+
+            <Col span={7}>
+              <header className="playground-tab-header">Output</header>
+              <Editor
+                className="editor-wrapper"
+                value={editorVals.output}
+                onValueChange={(code) =>
+                  setEditorVals({ ...editorVals, output: code })
+                }
+                highlight={(code) => highlight(code, languages.js)}
+                padding={10}
+              />
+            </Col>
+          </Row>
+        </Content>
+      </Layout>
     </>
   );
 }
