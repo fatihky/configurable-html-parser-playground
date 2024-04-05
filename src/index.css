@@ -1,17 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap');
-
-body {
-  margin: 0;
-  font-family: 'Fira Code', monospace;
-  font-size: 1.1rem;
-  font-weight: 400;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: #0F0F0F !important;
-  color: white !important;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+#root,
+#root > div {
+  height: 100%;
 }

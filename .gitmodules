@@ -1,0 +1,3 @@
+[submodule "src/configurable-html-parser"]
+	path = src/configurable-html-parser
+	url = git@github.com:fatihky/configurable-html-parser.git

@@ -1,15 +1,20 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Col, Layout, Row } from "antd";
-import { Content, Header } from "antd/lib/layout/layout";
-import Editor from "react-simple-code-editor";
-import { ConfigFactory, extract } from "configurable-html-parser";
-import { highlight, languages } from "prismjs/components/prism-core";
-import { load } from "cheerio";
-import cls from 'classnames'
+import { Col, Layout, Row } from 'antd';
+import { Content, Header } from 'antd/lib/layout/layout';
+import { load } from 'cheerio';
+import cls from 'classnames';
+import debounce from 'lodash/debounce';
+import { highlight, languages } from 'prismjs';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Editor from 'react-simple-code-editor';
+import { ConfigFactory, extract } from './configurable-html-parser/src';
 
-import './App.css'
+import 'antd/dist/reset.css';
 
-const debounce = require('lodash.debounce');
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-yaml';
+
+import 'prismjs/themes/prism.min.css';
+import './App.css';
 
 const samples = {
   basic: {
@@ -73,7 +78,7 @@ properties:
     multiTransform: {
       html: `<span foo="123">Hello World!</span>`,
       config: `selector: span
-transform: [attr(foo), number]`
+transform: [attr(foo), number]`,
     },
   },
   advanced: {
@@ -96,27 +101,29 @@ transform: [attr(foo), number]`
   # the default if any of the configs above don't match
   - selector: $self
     properties:
-      foo: { constant: nothing-matched }`
+      foo: { constant: nothing-matched }`,
     },
   },
-};
+} as const;
 
 function App() {
   const [editorVals, setEditorVals] = useState({
-    input: samples.basic.simple.html, // html
-    config: samples.basic.simple.config, // yaml
-    output: "", // json
+    input: samples.basic.simple.html as string, // html
+    config: samples.basic.simple.config as string, // yaml
+    output: '', // json
   });
   const onSampleChange = useCallback(
-    (sampleName: string) => {
+    (sampleName: keyof typeof samples) => {
       for (const category of Object.values(samples)) {
         if (Object.hasOwn(category, sampleName)) {
-          const sample = (category as any)[sampleName];
+          const sample = (
+            category as Record<string, { html: string; config: string }>
+          )[sampleName];
 
           setEditorVals({
             input: sample.html,
             config: sample.config,
-            output: "",
+            output: '',
           });
         }
       }
@@ -130,102 +137,112 @@ function App() {
     try {
       return ConfigFactory.fromYAML(editorVals.config);
     } catch (err) {
-      console.log((err as any).message);
+      console.log((err as Error).message);
       return null;
     }
   }, [editorVals.config]);
   const isValidConfig = config !== null;
-
-  const inputChangeHandler = () => {
-    const result = config === null
-      ? null
-      : extract($, config);
+  const inputChangeHandler = useCallback(() => {
+    const result =
+      config === null ? null : extract($, config, 'file://sample.html');
 
     setEditorVals({
       input: editorVals.input,
       config: editorVals.config,
-      output: JSON.stringify(result, null, "  "),
+      output: JSON.stringify(result, null, '  '),
     });
-  };
+  }, [$, config, editorVals.config, editorVals.input]);
   const debouncedInputChangeHandler = useMemo(
-    () => debounce(inputChangeHandler, 500)
-    , [$, config, editorVals.input, editorVals.config, setEditorVals]);
+    () => debounce(inputChangeHandler, 500),
+    [inputChangeHandler]
+  );
 
-  useEffect(debouncedInputChangeHandler, [$, config, editorVals.input, editorVals.config, setEditorVals]);
+  useEffect(debouncedInputChangeHandler, [debouncedInputChangeHandler]);
 
   useEffect(() => {
-    return () =>
-      debouncedInputChangeHandler.cancel()
+    return () => debouncedInputChangeHandler.cancel();
   }, [debouncedInputChangeHandler]);
 
   return (
     <>
       <Layout>
-        <Header className="header">
+        <Header className='header'>
           Playground
           <select
-            onChange={(ev) => onSampleChange(ev.target.value)}
-            className="preset-selector"
+            onChange={(ev) =>
+              onSampleChange(ev.target.value as keyof typeof samples)
+            }
+            className='preset-selector'
           >
-            <optgroup label="Basic">
-              <option value="simple">Simple</option>
-              <option value="getNumber">Get Number</option>
-              <option value="trim">Trim</option>
-              <option value="attr">Get Attribute</option>
-              <option value="attrMulti">Get Multiple Attributes</option>
-              <option value="attrAll">Get All Attributes</option>
+            <optgroup label='Basic'>
+              <option value='simple'>Simple</option>
+              <option value='getNumber'>Get Number</option>
+              <option value='trim'>Trim</option>
+              <option value='attr'>Get Attribute</option>
+              <option value='attrMulti'>Get Multiple Attributes</option>
+              <option value='attrAll'>Get All Attributes</option>
             </optgroup>
-            <optgroup label="Intermediate">
-              <option value="html">Get Inner HTML</option>
-              <option value="$self">$self selector</option>
-              <option value="html$self">Get Parent Selector's Inner HTML</option>
-              <option value="multiTransform">Multiple Transformers</option>
+            <optgroup label='Intermediate'>
+              <option value='html'>Get Inner HTML</option>
+              <option value='$self'>$self selector</option>
+              <option value='html$self'>
+                Get Parent Selector's Inner HTML
+              </option>
+              <option value='multiTransform'>Multiple Transformers</option>
             </optgroup>
-            <optgroup label="Advanced">
-              <option value="union">Union Configuration</option>
-              <option value="unionDefault">Union Configuration With Default Case</option>
+            <optgroup label='Advanced'>
+              <option value='union'>Union Configuration</option>
+              <option value='unionDefault'>
+                Union Configuration With Default Case
+              </option>
             </optgroup>
           </select>
         </Header>
 
-        <Content className="content" >
-          <Row justify='center' gutter={10} >
+        <Content className='content'>
+          <Row justify='center' gutter={10}>
             <Col span={7}>
-              <header className="playground-tab-header">HTML</header>
+              <header className='playground-tab-header'>HTML</header>
 
               <Editor
-                className="editor-wrapper"
+                className='editor-wrapper'
                 value={editorVals.input}
                 onValueChange={(code) =>
                   setEditorVals({ ...editorVals, input: code })
                 }
-                highlight={(code) => highlight(code, languages.html)}
+                highlight={(code) => highlight(code, languages.html, 'html')}
                 padding={10}
               />
             </Col>
 
             <Col span={7}>
-              <header className="playground-tab-header">Parser Configuration</header>
+              <header className='playground-tab-header'>
+                Parser Configuration
+              </header>
+
               <Editor
-                className={cls('editor-wrapper', (!isValidConfig) && 'invalid-parser-config')}
+                className={cls(
+                  'editor-wrapper',
+                  !isValidConfig && 'invalid-parser-config'
+                )}
                 value={editorVals.config}
                 onValueChange={(code) =>
                   setEditorVals({ ...editorVals, config: code })
                 }
-                highlight={(code) => highlight(code, languages.yaml)}
+                highlight={(code) => highlight(code, languages.yaml, 'yaml')}
                 padding={10}
               />
             </Col>
 
             <Col span={7}>
-              <header className="playground-tab-header">Output</header>
+              <header className='playground-tab-header'>Output</header>
               <Editor
-                className="editor-wrapper"
+                className='editor-wrapper'
                 value={editorVals.output}
                 onValueChange={(code) =>
                   setEditorVals({ ...editorVals, output: code })
                 }
-                highlight={(code) => highlight(code, languages.js)}
+                highlight={(code) => highlight(code, languages.json, 'json')}
                 padding={10}
               />
             </Col>

@@ -11,13 +11,14 @@ textarea.npm__react-simple-code-editor__textarea:focus {
 }
 
 .playground-tab-header {
+  color: white;
   margin-bottom: 0.5em;
 }
 
 .editor-wrapper {
   max-height: 50em;
   overflow: scroll !important;
-  background: #1B1A1A;
+  background: #1b1a1a;
   border-radius: 4px;
   font-size: 0.9rem;
   padding: 10px;
@@ -25,16 +26,16 @@ textarea.npm__react-simple-code-editor__textarea:focus {
 }
 
 .header {
-  background: #0F0F0F !important;
+  background: #0f0f0f !important;
   color: white !important;
 }
 
 .content {
-  background: #0F0F0F !important;
+  background: #0f0f0f !important;
 }
 
 .preset-selector {
-  background: #0F0F0F !important;
+  background: #0f0f0f !important;
   color: white;
   border-radius: 2px;
   font-size: 0.9rem;
