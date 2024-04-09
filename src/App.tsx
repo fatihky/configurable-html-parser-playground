@@ -1,12 +1,13 @@
-import { Col, Layout, Row } from 'antd';
+import { Button, Col, Input, Layout, Radio, Row } from 'antd';
 import { Content, Header } from 'antd/lib/layout/layout';
 import { load } from 'cheerio';
 import cls from 'classnames';
 import debounce from 'lodash/debounce';
 import { highlight, languages } from 'prismjs';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import Editor from 'react-simple-code-editor';
 import { ConfigFactory, extract } from './configurable-html-parser/src';
+import { samples } from './samples';
 
 import 'antd/dist/reset.css';
 
@@ -15,98 +16,10 @@ import 'prismjs/components/prism-yaml';
 
 import 'prismjs/themes/prism.min.css';
 import './App.css';
-
-const samples = {
-  basic: {
-    simple: {
-      html: `<div class="foo">Hello World!</div>`,
-      config: `selector: .foo`,
-    },
-    getNumber: {
-      html: `<div class="foo">123</div>`,
-      config: `selector: .foo
-transform: number`,
-    },
-    trim: {
-      html: `<div class="foo">    Hello World!   </div>`,
-      config: `selector: .foo
-transform: trim # try commenting-out this see non-trimmed result`,
-    },
-    attr: {
-      html: `<div foo="bar">Hello World!</div>`,
-      config: `selector: div
-transform: attr(foo)`,
-    },
-    attrMulti: {
-      html: `<div foo="aaa" bar="bbb">Hello World!</div>`,
-      config: `selector: div
-transform: attr(foo, bar)`,
-    },
-    attrAll: {
-      html: `<div foo="aaa" bar="bbb">Hello World!</div>`,
-      config: `selector: div
-transform: attr()`,
-    },
-  },
-  intermediate: {
-    html: {
-      html: `<div class="foo">
-  <span>Hello world!</span>
-</div>`,
-      config: `selector: .foo
-transform: html
-`,
-    },
-    $self: {
-      html: `<div class="foo">
-  Hello <span>World!</span>
-</div>`,
-      config: `selector: $self`,
-    },
-    html$self: {
-      html: `<div class="foo">
-  <div>
-    Hello <span>World!</span>
-  </div>
-</div>`,
-      config: `selector: .foo
-properties:
-  innerHTML:
-    selector: $self
-    transform: html`,
-    },
-    multiTransform: {
-      html: `<span foo="123">Hello World!</span>`,
-      config: `selector: span
-transform: [attr(foo), number]`,
-    },
-  },
-  advanced: {
-    union: {
-      html: `<div>Hello </div><span>World!</span>`,
-      config: `union: # union must be the only config property
-  - selector: p # the first config, will search for p element
-  - selector: a # the second config. searches a elements and converts these to number
-    transform: number
-  - selector: div, span # both of div's and span's will be matched.`,
-    },
-    unionDefault: {
-      html: `<div>Hello </div><span>World!</span>`,
-      config: `union: # union must be the only config property
-  - selector: p # the first config, will search for p element
-  - selector: a # the second config. searches a elements and converts these to number
-    transform: number
-  - selector: non-existent
-  # $self will always be matched, so this will be
-  # the default if any of the configs above don't match
-  - selector: $self
-    properties:
-      foo: { constant: nothing-matched }`,
-    },
-  },
-} as const;
+import { SampleConfigurationSelect } from './components/SampleConfigurationSelect';
 
 function App() {
+  const [fileContents, setFileContents] = useState<string | null>(null);
   const [editorVals, setEditorVals] = useState({
     input: samples.basic.simple.html as string, // html
     config: samples.basic.simple.config as string, // yaml
@@ -130,9 +43,10 @@ function App() {
     },
     [setEditorVals]
   );
-  const $ = useMemo(() => {
-    return load(editorVals.input);
-  }, [editorVals.input]);
+  const [debounceDuration, setDebounceDuration] = useState<
+    '250ms' | '1s' | 'disabled'
+  >('250ms');
+
   const config = useMemo(() => {
     try {
       return ConfigFactory.fromYAML(editorVals.config);
@@ -142,7 +56,9 @@ function App() {
     }
   }, [editorVals.config]);
   const isValidConfig = config !== null;
-  const inputChangeHandler = useCallback(() => {
+  const parseHtml = useCallback(() => {
+    const $ = load(fileContents ?? editorVals.input);
+
     const result =
       config === null ? null : extract($, config, 'file://sample.html');
 
@@ -151,56 +67,58 @@ function App() {
       config: editorVals.config,
       output: JSON.stringify(result, null, '  '),
     });
-  }, [$, config, editorVals.config, editorVals.input]);
-  const debouncedInputChangeHandler = useMemo(
-    () => debounce(inputChangeHandler, 500),
-    [inputChangeHandler]
-  );
+  }, [config, editorVals.config, editorVals.input, fileContents]);
+  const debouncedParseHtml = useMemo(() => {
+    if (debounceDuration === 'disabled') {
+      return debounce(parseHtml, 0);
+    }
 
-  useEffect(debouncedInputChangeHandler, [debouncedInputChangeHandler]);
+    return debounce(parseHtml, debounceDuration === '250ms' ? 250 : 1000);
+  }, [parseHtml, debounceDuration]);
+
+  const onFileInputChange = useCallback((ev: ChangeEvent<HTMLInputElement>) => {
+    if (ev.target.files) {
+      const [file] = ev.target.files;
+
+      console.log(file);
+
+      const reader = new FileReader();
+
+      reader.readAsText(file, 'utf-8');
+
+      reader.onload = (evt) => setFileContents(evt.target!.result as string);
+
+      reader.onerror = (err) => alert('Dosya okunamadı: ' + err);
+    } else {
+      setFileContents(null);
+    }
+  }, []);
 
   useEffect(() => {
-    return () => debouncedInputChangeHandler.cancel();
-  }, [debouncedInputChangeHandler]);
+    return () => debouncedParseHtml.cancel();
+  }, [debouncedParseHtml]);
+
+  // automatic html parse
+  useEffect(() => {
+    if (debounceDuration === 'disabled') {
+      return;
+    }
+
+    debouncedParseHtml();
+  }, [parseHtml, debounceDuration, debouncedParseHtml, editorVals]);
 
   return (
     <>
       <Layout>
-        <Header className='header'>
-          Playground
-          <select
-            onChange={(ev) =>
-              onSampleChange(ev.target.value as keyof typeof samples)
-            }
-            className='preset-selector'
-          >
-            <optgroup label='Basic'>
-              <option value='simple'>Simple</option>
-              <option value='getNumber'>Get Number</option>
-              <option value='trim'>Trim</option>
-              <option value='attr'>Get Attribute</option>
-              <option value='attrMulti'>Get Multiple Attributes</option>
-              <option value='attrAll'>Get All Attributes</option>
-            </optgroup>
-            <optgroup label='Intermediate'>
-              <option value='html'>Get Inner HTML</option>
-              <option value='$self'>$self selector</option>
-              <option value='html$self'>
-                Get Parent Selector's Inner HTML
-              </option>
-              <option value='multiTransform'>Multiple Transformers</option>
-            </optgroup>
-            <optgroup label='Advanced'>
-              <option value='union'>Union Configuration</option>
-              <option value='unionDefault'>
-                Union Configuration With Default Case
-              </option>
-            </optgroup>
-          </select>
-        </Header>
+        <Header className='header'>Playground</Header>
 
         <Content className='content'>
-          <Row justify='center' gutter={10}>
+          <Row justify='center' gutter={10} style={{ paddingTop: '1em' }}>
+            <Col span={21}>
+              Sample: <SampleConfigurationSelect onChange={onSampleChange} />
+            </Col>
+          </Row>
+          <Row justify='center' gutter={10} style={{ paddingTop: '1em' }}>
             <Col span={7}>
               <header className='playground-tab-header'>HTML</header>
 
@@ -212,6 +130,13 @@ function App() {
                 }
                 highlight={(code) => highlight(code, languages.html, 'html')}
                 padding={10}
+                disabled={fileContents !== null}
+              />
+
+              <Input
+                type='file'
+                style={{ marginTop: '1em' }}
+                onChange={onFileInputChange}
               />
             </Col>
 
@@ -219,7 +144,6 @@ function App() {
               <header className='playground-tab-header'>
                 Parser Configuration
               </header>
-
               <Editor
                 className={cls(
                   'editor-wrapper',
@@ -232,18 +156,35 @@ function App() {
                 highlight={(code) => highlight(code, languages.yaml, 'yaml')}
                 padding={10}
               />
+              <Button style={{ marginTop: '1em' }} onClick={parseHtml}>
+                Parse
+              </Button>{' '}
+              Debounce:{' '}
+              <Radio.Group
+                optionType='button'
+                options={[
+                  { value: '250ms', label: '250ms' },
+                  { value: '1s', label: '1 second' },
+                  { value: 'disabled', label: 'Disabled' },
+                ]}
+                size='small'
+                value={debounceDuration}
+                onChange={(ev) => setDebounceDuration(ev.target.value)}
+              />
             </Col>
 
             <Col span={7}>
               <header className='playground-tab-header'>Output</header>
               <Editor
                 className='editor-wrapper'
+                preClassName='editor-highlighted-pre'
                 value={editorVals.output}
                 onValueChange={(code) =>
                   setEditorVals({ ...editorVals, output: code })
                 }
                 highlight={(code) => highlight(code, languages.json, 'json')}
                 padding={10}
+                textareaClassName='editor-highlighted'
               />
             </Col>
           </Row>

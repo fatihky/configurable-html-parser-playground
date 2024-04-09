@@ -1,45 +1,28 @@
-.invalid-parser-config textarea.npm__react-simple-code-editor__textarea {
-  border-color: rgb(237, 82, 82) !important;
-}
-
-textarea.npm__react-simple-code-editor__textarea {
-  border: 2px dashed #323232 !important;
-}
-
-textarea.npm__react-simple-code-editor__textarea:focus {
-  outline: none;
-}
-
 .playground-tab-header {
-  color: white;
   margin-bottom: 0.5em;
 }
 
 .editor-wrapper {
-  max-height: 50em;
-  overflow: scroll !important;
-  background: #1b1a1a;
   border-radius: 4px;
   font-size: 0.9rem;
   padding: 10px;
-  min-height: 20em;
+  height: 20em;
+  overflow: scroll !important;
+  border: 1px dashed #323232 !important;
+}
+
+.editor-wrapper.invalid-parser-config {
+  border-color: rgb(237, 82, 82) !important;
 }
 
 .header {
-  background: #0f0f0f !important;
-  color: white !important;
-}
-
-.content {
-  background: #0f0f0f !important;
+  background-color: white;
 }
 
 .preset-selector {
-  background: #0f0f0f !important;
-  color: white;
   border-radius: 2px;
   font-size: 0.9rem;
   width: 400px;
   margin-left: 20px;
-  border: 2px dashed #323232;
+  border: 1px dotted #323232;
 }
