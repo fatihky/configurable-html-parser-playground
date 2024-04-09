@@ -119,7 +119,7 @@ function App() {
     }
 
     debouncedParseHtml();
-  }, [parseHtml, debounceDuration, debouncedParseHtml, editorVals]);
+  }, [parseHtml, debounceDuration, debouncedParseHtml]);
 
   const parsedOutput = useMemo(
     () => (jsonViewer === 'json-editor' ? {} : JSON.parse(editorVals.output)),
