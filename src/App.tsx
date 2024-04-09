@@ -34,7 +34,7 @@ function App() {
   const [editorVals, setEditorVals] = useState({
     input: samples.basic.simple.html as string, // html
     // config: samples.basic.simple.config as string, // yaml
-    output: '', // json
+    output: 'null', // json
   });
   const onSampleChange = useCallback(
     (sampleName: keyof typeof samples) => {
@@ -44,12 +44,11 @@ function App() {
             category as Record<string, { html: string; config: string }>
           )[sampleName];
 
+          setParserConfig(sample.config);
           setEditorVals({
             input: sample.html,
-            output: '',
+            output: 'null',
           });
-
-          setParserConfig(sample.config);
         }
       }
     },
@@ -58,9 +57,9 @@ function App() {
   const [debounceDuration, setDebounceDuration] = useState<
     '250ms' | '1s' | 'disabled'
   >('250ms');
-  const [jsonViewer, setJsonViewer] = useState<
-    'react-simple-code-editor' | 'react-json-view-lite'
-  >('react-simple-code-editor');
+  const [jsonViewer, setJsonViewer] = useState<'json-editor' | 'json-viewer'>(
+    'json-editor'
+  );
 
   const config = useMemo(() => {
     try {
@@ -123,10 +122,7 @@ function App() {
   }, [parseHtml, debounceDuration, debouncedParseHtml, editorVals]);
 
   const parsedOutput = useMemo(
-    () =>
-      jsonViewer === 'react-simple-code-editor'
-        ? {}
-        : JSON.parse(editorVals.output),
+    () => (jsonViewer === 'json-editor' ? {} : JSON.parse(editorVals.output)),
     [jsonViewer, editorVals.output]
   );
 
@@ -190,7 +186,7 @@ function App() {
             <Col span={7}>
               <header className='playground-tab-header'>Output</header>
 
-              {jsonViewer === 'react-simple-code-editor' ? (
+              {jsonViewer === 'json-editor' ? (
                 <Editor
                   className='editor-wrapper'
                   preClassName='editor-highlighted-pre'
@@ -212,8 +208,8 @@ function App() {
                 size='small'
                 optionType='button'
                 options={[
-                  { value: 'react-simple-code-editor', label: 'JSON Editor' },
-                  { value: 'react-json-view-lite', label: 'JSON Viewer' },
+                  { value: 'json-editor', label: 'JSON Editor' },
+                  { value: 'json-viewer', label: 'JSON Viewer' },
                 ]}
                 value={jsonViewer}
                 onChange={(ev) => setJsonViewer(ev.target.value)}
