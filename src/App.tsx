@@ -8,6 +8,8 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import Editor from 'react-simple-code-editor';
 import { ConfigFactory, extract } from './configurable-html-parser/src';
 import { samples } from './samples';
+import { JsonView } from 'react-json-view-lite';
+import { SampleConfigurationSelect } from './components/SampleConfigurationSelect';
 
 import 'antd/dist/reset.css';
 
@@ -15,14 +17,23 @@ import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-yaml';
 
 import 'prismjs/themes/prism.min.css';
+
+import 'react-json-view-lite/dist/index.css';
+
 import './App.css';
-import { SampleConfigurationSelect } from './components/SampleConfigurationSelect';
+
+import { useLocalStorage } from '@uidotdev/usehooks';
 
 function App() {
   const [fileContents, setFileContents] = useState<string | null>(null);
+  const [parserConfig, setParserConfig] = useLocalStorage<string>(
+    'parserConfiguration',
+    samples.basic.simple.config
+  );
+
   const [editorVals, setEditorVals] = useState({
     input: samples.basic.simple.html as string, // html
-    config: samples.basic.simple.config as string, // yaml
+    // config: samples.basic.simple.config as string, // yaml
     output: '', // json
   });
   const onSampleChange = useCallback(
@@ -35,26 +46,30 @@ function App() {
 
           setEditorVals({
             input: sample.html,
-            config: sample.config,
             output: '',
           });
+
+          setParserConfig(sample.config);
         }
       }
     },
-    [setEditorVals]
+    [setEditorVals, setParserConfig]
   );
   const [debounceDuration, setDebounceDuration] = useState<
     '250ms' | '1s' | 'disabled'
   >('250ms');
+  const [jsonViewer, setJsonViewer] = useState<
+    'react-simple-code-editor' | 'react-json-view-lite'
+  >('react-simple-code-editor');
 
   const config = useMemo(() => {
     try {
-      return ConfigFactory.fromYAML(editorVals.config);
+      return ConfigFactory.fromYAML(parserConfig);
     } catch (err) {
       console.log((err as Error).message);
       return null;
     }
-  }, [editorVals.config]);
+  }, [parserConfig]);
   const isValidConfig = config !== null;
   const parseHtml = useCallback(() => {
     const $ = load(fileContents ?? editorVals.input);
@@ -64,10 +79,10 @@ function App() {
 
     setEditorVals({
       input: editorVals.input,
-      config: editorVals.config,
+      // config: editorVals.config,
       output: JSON.stringify(result, null, '  '),
     });
-  }, [config, editorVals.config, editorVals.input, fileContents]);
+  }, [config, editorVals.input, fileContents]);
   const debouncedParseHtml = useMemo(() => {
     if (debounceDuration === 'disabled') {
       return debounce(parseHtml, 0);
@@ -107,6 +122,14 @@ function App() {
     debouncedParseHtml();
   }, [parseHtml, debounceDuration, debouncedParseHtml, editorVals]);
 
+  const parsedOutput = useMemo(
+    () =>
+      jsonViewer === 'react-simple-code-editor'
+        ? {}
+        : JSON.parse(editorVals.output),
+    [jsonViewer, editorVals.output]
+  );
+
   return (
     <>
       <Layout>
@@ -133,11 +156,7 @@ function App() {
                 disabled={fileContents !== null}
               />
 
-              <Input
-                type='file'
-                style={{ marginTop: '1em' }}
-                onChange={onFileInputChange}
-              />
+              <Input type='file' onChange={onFileInputChange} />
             </Col>
 
             <Col span={7}>
@@ -149,17 +168,12 @@ function App() {
                   'editor-wrapper',
                   !isValidConfig && 'invalid-parser-config'
                 )}
-                value={editorVals.config}
-                onValueChange={(code) =>
-                  setEditorVals({ ...editorVals, config: code })
-                }
+                value={parserConfig}
+                onValueChange={(code) => setParserConfig(code as string)}
                 highlight={(code) => highlight(code, languages.yaml, 'yaml')}
                 padding={10}
               />
-              <Button style={{ marginTop: '1em' }} onClick={parseHtml}>
-                Parse
-              </Button>{' '}
-              Debounce:{' '}
+              <Button onClick={parseHtml}>Parse</Button> Debounce:{' '}
               <Radio.Group
                 optionType='button'
                 options={[
@@ -175,16 +189,32 @@ function App() {
 
             <Col span={7}>
               <header className='playground-tab-header'>Output</header>
-              <Editor
-                className='editor-wrapper'
-                preClassName='editor-highlighted-pre'
-                value={editorVals.output}
-                onValueChange={(code) =>
-                  setEditorVals({ ...editorVals, output: code })
-                }
-                highlight={(code) => highlight(code, languages.json, 'json')}
-                padding={10}
-                textareaClassName='editor-highlighted'
+
+              {jsonViewer === 'react-simple-code-editor' ? (
+                <Editor
+                  className='editor-wrapper'
+                  preClassName='editor-highlighted-pre'
+                  value={editorVals.output}
+                  onValueChange={(code) =>
+                    setEditorVals({ ...editorVals, output: code })
+                  }
+                  highlight={(code) => highlight(code, languages.json, 'json')}
+                  padding={10}
+                  textareaClassName='editor-highlighted'
+                />
+              ) : (
+                <JsonView data={parsedOutput} />
+              )}
+
+              <Radio.Group
+                size='small'
+                optionType='button'
+                options={[
+                  { value: 'react-simple-code-editor', label: 'JSON Editor' },
+                  { value: 'react-json-view-lite', label: 'JSON Viewer' },
+                ]}
+                value={jsonViewer}
+                onChange={(ev) => setJsonViewer(ev.target.value)}
               />
             </Col>
           </Row>

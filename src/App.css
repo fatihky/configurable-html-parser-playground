@@ -9,6 +9,7 @@
   height: 20em;
   overflow: scroll !important;
   border: 1px dashed #323232 !important;
+  margin-bottom: 1em;
 }
 
 .editor-wrapper.invalid-parser-config {
