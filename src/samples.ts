@@ -48,7 +48,6 @@ transform: html
       config: `selector: .foo
 properties:
   innerHTML:
-    selector: $self
     transform: html`,
     },
     multiTransform: {
@@ -73,10 +72,9 @@ transform: [attr(foo), number]`,
   - selector: a # the second config. searches a elements and converts these to number
     transform: number
   - selector: non-existent
-  # $self will always be matched, so this will be
   # the default if any of the configs above don't match
-  - selector: $self
-    properties:
+  # (selector was not passed)
+  - properties:
       foo: { constant: nothing-matched }`,
     },
   },
