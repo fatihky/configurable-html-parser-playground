@@ -203,7 +203,9 @@ function App() {
                   textareaClassName='editor-highlighted'
                 />
               ) : (
-                <JsonView data={parsedOutput} />
+                <div className='editor-wrapper'>
+                  <JsonView data={parsedOutput} />
+                </div>
               )}
 
               <Radio.Group
