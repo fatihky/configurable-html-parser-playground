@@ -20,6 +20,9 @@ import 'react-json-view-lite/dist/index.css';
 import './Playground.css';
 
 export function Playground() {
+  const [lastParseDurationMs, setLastParseDurationMs] = useState<number | null>(
+    null
+  );
   const [fileContents, setFileContents] = useState<string | null>(null);
   const [parserConfig, setParserConfig] = useLocalStorage<string>(
     'parserConfiguration',
@@ -68,8 +71,10 @@ export function Playground() {
   const parseHtml = useCallback(() => {
     const $ = load(fileContents ?? editorVals.input);
 
+    const parseStart = Date.now();
     const result =
       config === null ? null : extract($, config, 'file://sample.html');
+    setLastParseDurationMs(Date.now() - parseStart);
 
     setEditorVals({
       input: editorVals.input,
@@ -175,7 +180,12 @@ export function Playground() {
         </Col>
 
         <Col span={7}>
-          <header className='playground-tab-header'>Output</header>
+          <header className='playground-tab-header'>
+            Output{' '}
+            {lastParseDurationMs
+              ? `(completed in ${lastParseDurationMs} ms)`
+              : ''}
+          </header>
 
           {jsonViewer === 'json-editor' ? (
             <Editor
