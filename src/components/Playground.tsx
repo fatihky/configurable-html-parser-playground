@@ -128,17 +128,17 @@ export function Playground() {
 
   return (
     <div>
-      <Row justify='center' gutter={10} style={{ paddingTop: '1em' }}>
+      <Row justify="center" gutter={10} style={{ paddingTop: '1em' }}>
         <Col span={21}>
           Sample: <SampleConfigurationSelect onChange={onSampleChange} />
         </Col>
       </Row>
-      <Row justify='center' gutter={10} style={{ paddingTop: '1em' }}>
+      <Row justify="center" gutter={10} style={{ paddingTop: '1em' }}>
         <Col span={7}>
-          <header className='playground-tab-header'>HTML</header>
+          <header className="playground-tab-header">HTML</header>
 
           <Editor
-            className='editor-wrapper'
+            className="editor-wrapper"
             value={editorVals.input}
             onValueChange={(code) =>
               setEditorVals({ ...editorVals, input: code })
@@ -148,11 +148,11 @@ export function Playground() {
             disabled={fileContents !== null}
           />
 
-          <Input type='file' onChange={onFileInputChange} />
+          <Input type="file" onChange={onFileInputChange} />
         </Col>
 
         <Col span={7}>
-          <header className='playground-tab-header'>
+          <header className="playground-tab-header">
             Parser Configuration
           </header>
           <Editor
@@ -167,20 +167,20 @@ export function Playground() {
           />
           <Button onClick={parseHtml}>Parse</Button> Debounce:{' '}
           <Radio.Group
-            optionType='button'
+            optionType="button"
             options={[
               { value: '250ms', label: '250ms' },
               { value: '1s', label: '1 second' },
               { value: 'disabled', label: 'Disabled' },
             ]}
-            size='small'
+            size="small"
             value={debounceDuration}
             onChange={(ev) => setDebounceDuration(ev.target.value)}
           />
         </Col>
 
         <Col span={7}>
-          <header className='playground-tab-header'>
+          <header className="playground-tab-header">
             Output{' '}
             {lastParseDurationMs
               ? `(completed in ${lastParseDurationMs} ms)`
@@ -189,25 +189,25 @@ export function Playground() {
 
           {jsonViewer === 'json-editor' ? (
             <Editor
-              className='editor-wrapper'
-              preClassName='editor-highlighted-pre'
+              className="editor-wrapper"
+              preClassName="editor-highlighted-pre"
               value={editorVals.output}
               onValueChange={(code) =>
                 setEditorVals({ ...editorVals, output: code })
               }
               highlight={(code) => highlight(code, languages.json, 'json')}
               padding={10}
-              textareaClassName='editor-highlighted'
+              textareaClassName="editor-highlighted"
             />
           ) : (
-            <div className='editor-wrapper'>
+            <div className="editor-wrapper">
               <JsonView data={parsedOutput} />
             </div>
           )}
 
           <Radio.Group
-            size='small'
-            optionType='button'
+            size="small"
+            optionType="button"
             options={[
               { value: 'json-editor', label: 'JSON Editor' },
               { value: 'json-viewer', label: 'JSON Viewer' },
